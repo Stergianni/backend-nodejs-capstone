@@ -1,3 +1,6 @@
+// Importing eslint-config-standard
+const eslintConfigStandard = require('eslint-config-standard');
+
 module.exports = {
   languageOptions: {
     globals: {
@@ -7,7 +10,6 @@ module.exports = {
     },
     ecmaVersion: 'latest',
   },
-  extends: 'standard',
   overrides: [
     {
       files: ['.eslintrc.{js,cjs}'],
@@ -20,4 +22,6 @@ module.exports = {
     },
   ],
   rules: {},
+  // Include the eslint-config-standard rules directly
+  ...eslintConfigStandard,
 };
