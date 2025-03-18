@@ -3,21 +3,18 @@ const express = require('express');
 const axios = require('axios');
 const logger = require('./logger');
 const expressPino = require('express-pino-logger')({ logger });
-// Task 1: Import the natural library
 const natural = require("natural");
 
-// Task 2: Initialize the express server
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(expressPino);
 
-// Task 3: Create the POST /sentiment endpoint
+// Define the sentiment analysis route
 app.post('/sentiment', async (req, res) => {
+    const { sentence } = req.query;
 
-    // Task 4: Extract the sentence parameter from the request body
-    const { sentence } = req.body;
 
     if (!sentence) {
         logger.error('No sentence provided');
@@ -35,7 +32,6 @@ app.post('/sentiment', async (req, res) => {
 
         let sentiment = "neutral";
 
-        // Task 5: Set sentiment to negative or positive based on score rules
         if (analysisResult < 0) {
             sentiment = "negative";
         } else if (analysisResult > 0.33) {
@@ -44,17 +40,15 @@ app.post('/sentiment', async (req, res) => {
 
         // Logging the result
         logger.info(`Sentiment analysis result: ${analysisResult}`);
-
-        // Task 6: Send a status code of 200 with both sentiment score and the sentiment text
+        // Responding with the sentiment analysis result
         res.status(200).json({ sentimentScore: analysisResult, sentiment: sentiment });
     } catch (error) {
         logger.error(`Error performing sentiment analysis: ${error}`);
-        
-        // Task 7: If there is an error, return a HTTP code of 500 and the JSON {'message': 'Error performing sentiment analysis'}
         res.status(500).json({ message: 'Error performing sentiment analysis' });
     }
 });
 
+// Start the server
 app.listen(port, () => {
     logger.info(`Server running on port ${port}`);
 });
