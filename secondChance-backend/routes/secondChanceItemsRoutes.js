@@ -127,5 +127,32 @@ router.put('/:id', async (req, res, next) => {
     }
 });
 
+router.delete('/:id', async (req, res, next) => {
+    try {
+        // Task 1: Retrieve the database connection
+        const db = await connectToDatabase();
+
+        // Task 2: Retrieve the secondChanceItems collection
+        const collection = db.collection("secondChanceItems");
+
+        // Task 3: Find a specific secondChanceItem by ID
+        const id = req.params.id;
+        const secondChanceItem = await collection.findOne({ id });
+
+        if (!secondChanceItem) {
+            logger.error('SecondChanceItem not found');
+            return res.status(404).json({ error: "SecondChanceItem not found" });
+        }
+
+        // Task 4: Delete the object
+        await collection.deleteOne({ id });
+
+        res.json({ message: "Delete successful" });
+    } catch (e) {
+        logger.error('Error deleting item:', e);
+        next(e);
+    }
+});
+
 
 module.exports = router;
