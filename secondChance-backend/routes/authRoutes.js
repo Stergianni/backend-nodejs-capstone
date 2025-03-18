@@ -50,4 +50,49 @@ router.post('/register', async (req, res) => {
     }
 });
 
+router.post('/login', async (req, res) => {
+    try {
+        // Task 1: Connect to MongoDB
+        const db = await connectToDatabase();
+        
+        // Task 2: Access MongoDB `users` collection
+        const collection = db.collection("users");
+
+        // Task 3: Check for user credentials in the database
+        const theUser = await collection.findOne({ email: req.body.email });
+        
+        // Task 7: Send an appropriate message if the user is not found
+        if (!theUser) {
+            logger.error('User not found');
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Task 4: Check if the password matches the encrypted password
+        const isPasswordValid = await bcryptjs.compare(req.body.password, theUser.password);
+        if (!isPasswordValid) {
+            logger.error('Passwords do not match');
+            return res.status(400).json({ error: 'Wrong password' });
+        }
+
+        // Task 5: Fetch user details from the database
+        const userName = theUser.firstName;
+        const userEmail = theUser.email;
+
+        // Task 6: Create JWT authentication if passwords match with user._id as payload
+        const payload = {
+            user: {
+                id: theUser._id.toString(), // Convert ObjectId to string for the payload
+            },
+        };
+        const authtoken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' }); // Add JWT_SECRET in your .env file
+
+        // Send the token and user details
+        res.json({ authtoken, userName, userEmail });
+
+    } catch (e) {
+        console.error(e);
+        return res.status(500).send('Internal server error');
+    }
+});
+
 module.exports = router;
