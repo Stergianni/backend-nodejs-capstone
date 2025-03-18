@@ -10,13 +10,18 @@ dotenv.config();
 const logger = pino();  // Create a Pino logger instance
 
 //Create JWT secret
+dotenv.config();
 const JWT_SECRET = process.env.JWT_SECRET;
 
 router.post('/register', async (req, res) => {
     try {
       //Connect to `secondChance` in MongoDB through `connectToDatabase` in `db.js`.
       const db = await connectToDatabase();
+
+      //Access the `users` collection
       const collection = db.collection("users");
+
+      //Check for existing email in DB
       const existingEmail = await collection.findOne({ email: req.body.email });
 
         if (existingEmail) {
@@ -27,6 +32,8 @@ router.post('/register', async (req, res) => {
         const salt = await bcryptjs.genSalt(10);
         const hash = await bcryptjs.hash(req.body.password, salt);
         const email=req.body.email;
+
+        //Save user details
         const newUser = await collection.insertOne({
             email: req.body.email,
             firstName: req.body.firstName,
@@ -41,6 +48,7 @@ router.post('/register', async (req, res) => {
             },
         };
 
+        //Create JWT
         const authtoken = jwt.sign(payload, JWT_SECRET);
         logger.info('User registered successfully');
         res.json({ authtoken,email });
@@ -50,49 +58,47 @@ router.post('/register', async (req, res) => {
     }
 });
 
+    //Login Endpoint
 router.post('/login', async (req, res) => {
-    try {
-        // Task 1: Connect to MongoDB
-        const db = await connectToDatabase();
-        
-        // Task 2: Access MongoDB `users` collection
-        const collection = db.collection("users");
+    console.log("\n\n Inside login")
 
-        // Task 3: Check for user credentials in the database
+    try {
+        // connect to `secondChance` in MongoDB through `connectToDatabase`
+        const db = await connectToDatabase();
+        //Access MongoDB `users` collection
+        const collection = db.collection("users");
+        //Check for user credentials in database
         const theUser = await collection.findOne({ email: req.body.email });
-        
-        // Task 7: Send an appropriate message if the user is not found
-        if (!theUser) {
+        //Check if the password matches
+        if (theUser) {
+            let result = await bcryptjs.compare(req.body.password, theUser.password)
+            //send appropriate message if mismatch
+            if(!result) {
+                logger.error('Passwords do not match');
+                return res.status(404).json({ error: 'Wrong pasword' });
+            }
+            //Fetch user details
+            let payload = {
+                user: {
+                    id: theUser._id.toString(),
+                },
+            };
+
+            const userName = theUser.firstName;
+            const userEmail = theUser.email;
+            //Create JWT authentication if passwords match
+            const authtoken = jwt.sign(payload, JWT_SECRET);
+            logger.info('User logged in successfully');
+            return res.status(200).json({ authtoken, userName, userEmail });
+        //Send appropriate message if user not found
+        } else {
             logger.error('User not found');
             return res.status(404).json({ error: 'User not found' });
         }
-
-        // Task 4: Check if the password matches the encrypted password
-        const isPasswordValid = await bcryptjs.compare(req.body.password, theUser.password);
-        if (!isPasswordValid) {
-            logger.error('Passwords do not match');
-            return res.status(400).json({ error: 'Wrong password' });
-        }
-
-        // Task 5: Fetch user details from the database
-        const userName = theUser.firstName;
-        const userEmail = theUser.email;
-
-        // Task 6: Create JWT authentication if passwords match with user._id as payload
-        const payload = {
-            user: {
-                id: theUser._id.toString(), // Convert ObjectId to string for the payload
-            },
-        };
-        const authtoken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' }); // Add JWT_SECRET in your .env file
-
-        // Send the token and user details
-        res.json({ authtoken, userName, userEmail });
-
     } catch (e) {
-        console.error(e);
-        return res.status(500).send('Internal server error');
-    }
+        logger.error(e);
+        return res.status(500).json({ error: 'Internal server error', details: e.message });
+      }
 });
 
 module.exports = router;
