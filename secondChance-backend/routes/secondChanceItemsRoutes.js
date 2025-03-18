@@ -21,73 +21,23 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-
 // Get all secondChanceItems
 router.get('/', async (req, res, next) => {
     logger.info('/ called');
     try {
-        //Step 2: task 1 - insert code here
-        //Step 2: task 2 - insert code here
-        //Step 2: task 3 - insert code here
-        //Step 2: task 4 - insert code here
+        // Task 1: Retrieve the database connection
+        const db = await connectToDatabase();
 
+        // Task 2: Retrieve the secondChanceItems collection
         const collection = db.collection("secondChanceItems");
+
+        // Task 3: Fetch all secondChanceItems
         const secondChanceItems = await collection.find({}).toArray();
+
+        // Task 4: Return the secondChanceItems
         res.json(secondChanceItems);
     } catch (e) {
-        logger.console.error('oops something went wrong', e)
-        next(e);
-    }
-});
-
-// Add a new item
-router.post('/', {Step 3: Task 6 insert code here}, async(req, res,next) => {
-    try {
-
-        //Step 3: task 1 - insert code here
-        //Step 3: task 2 - insert code here
-        //Step 3: task 3 - insert code here
-        //Step 3: task 4 - insert code here
-        //Step 3: task 5 - insert code here
-        res.status(201).json(secondChanceItem.ops[0]);
-    } catch (e) {
-        next(e);
-    }
-});
-
-// Get a single secondChanceItem by ID
-router.get('/:id', async (req, res, next) => {
-    try {
-        //Step 4: task 1 - insert code here
-        //Step 4: task 2 - insert code here
-        //Step 4: task 3 - insert code here
-        //Step 4: task 4 - insert code here
-    } catch (e) {
-        next(e);
-    }
-});
-
-// Update and existing item
-router.put('/:id', async(req, res,next) => {
-    try {
-        //Step 5: task 1 - insert code here
-        //Step 5: task 2 - insert code here
-        //Step 5: task 3 - insert code here
-        //Step 5: task 4 - insert code here
-        //Step 5: task 5 - insert code here
-    } catch (e) {
-        next(e);
-    }
-});
-
-// Delete an existing item
-router.delete('/:id', async(req, res,next) => {
-    try {
-        //Step 6: task 1 - insert code here
-        //Step 6: task 2 - insert code here
-        //Step 6: task 3 - insert code here
-        //Step 6: task 4 - insert code here
-    } catch (e) {
+        logger.error('Oops, something went wrong', e);
         next(e);
     }
 });
