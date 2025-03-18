@@ -1,7 +1,5 @@
 const express = require('express')
 const multer = require('multer')
-const path = require('path')
-const fs = require('fs')
 const router = express.Router()
 const connectToDatabase = require('../models/db')
 const logger = require('../logger')
@@ -25,7 +23,6 @@ const upload = multer({ storage })
 router.get('/', async (req, res, next) => {
   try {
     const db = await connectToDatabase()
-
     const collection = db.collection('secondChanceItems')
     const secondChanceItems = await collection.find({}).toArray()
     res.json(secondChanceItems)
@@ -64,8 +61,8 @@ router.post('/', upload.single('file'), async (req, res, next) => {
     await lastItemQuery.forEach(item => {
       secondChanceItem.id = (parseInt(item.id) + 1).toString()
     })
-    const date_added = Math.floor(new Date().getTime() / 1000)
-    secondChanceItem.date_added = date_added
+    const dateAdded = Math.floor(new Date().getTime() / 1000) // Renamed to camel case
+    secondChanceItem.date_added = dateAdded
 
     secondChanceItem = await collection.insertOne(secondChanceItem)
     console.log(secondChanceItem)
@@ -75,7 +72,7 @@ router.post('/', upload.single('file'), async (req, res, next) => {
   }
 })
 
-// Update and existing item
+// Update an existing item
 router.put('/:id', async (req, res, next) => {
   try {
     const db = await connectToDatabase()
@@ -95,13 +92,14 @@ router.put('/:id', async (req, res, next) => {
     secondChanceItem.age_years = Number((secondChanceItem.age_days / 365).toFixed(1))
     secondChanceItem.updatedAt = new Date()
 
-    const updatepreloveItem = await collection.findOneAndUpdate(
+    // Directly checking for success instead of storing the result in an unused variable
+    const updateResult = await collection.findOneAndUpdate(
       { id },
       { $set: secondChanceItem },
       { returnDocument: 'after' }
     )
 
-    if (updatepreloveItem) {
+    if (updateResult.value) {
       res.json({ uploaded: 'success' })
     } else {
       res.json({ uploaded: 'failed' })
@@ -123,7 +121,8 @@ router.delete('/:id', async (req, res, next) => {
       logger.error('secondChanceItem not found')
       return res.status(404).json({ error: 'secondChanceItem not found' })
     }
-    const updatepreloveItem = await collection.deleteOne({ id })
+
+    await collection.deleteOne({ id })
 
     res.json({ deleted: 'success' })
   } catch (e) {

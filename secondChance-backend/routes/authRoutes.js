@@ -6,8 +6,8 @@ const router = express.Router()
 const dotenv = require('dotenv')
 const pino = require('pino') // Import Pino logger
 
-// Task 1: Use the `body`,`validationResult` from `express-validator` for input validation
-const { body, validationResult } = require('express-validator')
+// Task 1: Use the `validationResult` from `express-validator` for input validation
+const { validationResult } = require('express-validator')
 
 const logger = pino() // Create a Pino logger instance
 
@@ -57,7 +57,6 @@ router.post('/login', async (req, res) => {
   console.log('\n\n Inside login')
 
   try {
-    // const collection = await connectToDatabase();
     const db = await connectToDatabase()
     const collection = db.collection('users')
     const theUser = await collection.findOne({ email: req.body.email })
@@ -66,7 +65,7 @@ router.post('/login', async (req, res) => {
       const result = await bcryptjs.compare(req.body.password, theUser.password)
       if (!result) {
         logger.error('Passwords do not match')
-        return res.status(404).json({ error: 'Wrong pasword' })
+        return res.status(404).json({ error: 'Wrong password' })
       }
       const payload = {
         user: {
@@ -90,9 +89,9 @@ router.post('/login', async (req, res) => {
   }
 })
 
-// update API
+// Update API
 router.put('/update', async (req, res) => {
-  // Task 2: Validate the input using `validationResult` and return approiate message if there is an error.
+  // Task 2: Validate the input using `validationResult` and return appropriate message if there is an error.
 
   const errors = validationResult(req)
 
@@ -148,4 +147,5 @@ router.put('/update', async (req, res) => {
     return res.status(500).send('Internal Server Error')
   }
 })
+
 module.exports = router
