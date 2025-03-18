@@ -60,4 +60,28 @@ router.post('/', upload.single('file'), async (req, res, next) => {
     }
 });
 
+router.get('/:id', async (req, res, next) => {
+    try {
+        // Task 1: Retrieve the database connection
+        const db = await connectToDatabase();
+
+        // Task 2: Retrieve the secondChanceItems collection
+        const collection = db.collection("secondChanceItems");
+
+        // Task 3: Find a specific secondChanceItem by its ID
+        const id = req.params.id;
+        const secondChanceItem = await collection.findOne({ id: id });
+
+        // Task 4: Return the secondChanceItem or an error message if not found
+        if (!secondChanceItem) {
+            return res.status(404).send("SecondChanceItem not found");
+        }
+
+        res.json(secondChanceItem);
+    } catch (e) {
+        logger.error('Error retrieving item:', e);
+        next(e);
+    }
+});
+
 module.exports = router;
