@@ -60,7 +60,8 @@ router.post('/', upload.single('file'), async (req, res, next) => {
     }
 });
 
-router.get('/:id', async (req, res, next) => {
+// Route to fetch all items
+router.get('/', async (req, res, next) => {
     try {
         // Task 1: Retrieve the database connection
         const db = await connectToDatabase();
@@ -68,11 +69,25 @@ router.get('/:id', async (req, res, next) => {
         // Task 2: Retrieve the secondChanceItems collection
         const collection = db.collection("secondChanceItems");
 
-        // Task 3: Find a specific secondChanceItem by its ID
+        // Task 3: Find all secondChanceItems
+        const items = await collection.find().toArray();
+
+        // Task 4: Return all items
+        res.json(items);
+    } catch (e) {
+        logger.error('Error retrieving all items:', e);
+        next(e);
+    }
+});
+
+// Get a single item by ID
+router.get('/:id', async (req, res, next) => {
+    try {
+        const db = await connectToDatabase();
+        const collection = db.collection("secondChanceItems");
         const id = req.params.id;
         const secondChanceItem = await collection.findOne({ id: id });
 
-        // Task 4: Return the secondChanceItem or an error message if not found
         if (!secondChanceItem) {
             return res.status(404).send("SecondChanceItem not found");
         }
@@ -83,76 +98,5 @@ router.get('/:id', async (req, res, next) => {
         next(e);
     }
 });
-
-router.put('/:id', async (req, res, next) => {
-    try {
-        // Task 1: Retrieve the database connection
-        const db = await connectToDatabase();
-
-        // Task 2: Retrieve the secondChanceItems collection
-        const collection = db.collection("secondChanceItems");
-
-        // Task 3: Check if the secondChanceItem exists
-        const id = req.params.id;
-        const secondChanceItem = await collection.findOne({ id });
-
-        if (!secondChanceItem) {
-            logger.error('SecondChanceItem not found');
-            return res.status(404).json({ error: "SecondChanceItem not found" });
-        }
-
-        // Task 4: Update the item's attributes
-        secondChanceItem.category = req.body.category;
-        secondChanceItem.condition = req.body.condition;
-        secondChanceItem.age_days = req.body.age_days;
-        secondChanceItem.description = req.body.description;
-        secondChanceItem.age_years = Number((secondChanceItem.age_days / 365).toFixed(1));
-        secondChanceItem.updatedAt = new Date();
-
-        const updatedItem = await collection.findOneAndUpdate(
-            { id },
-            { $set: secondChanceItem },
-            { returnDocument: 'after' }
-        );
-
-        // Task 5: Send confirmation
-        if (updatedItem) {
-            res.json({ message: "Update successful", updatedItem });
-        } else {
-            res.status(500).json({ error: "Update failed" });
-        }
-    } catch (e) {
-        logger.error('Error updating item:', e);
-        next(e);
-    }
-});
-
-router.delete('/:id', async (req, res, next) => {
-    try {
-        // Task 1: Retrieve the database connection
-        const db = await connectToDatabase();
-
-        // Task 2: Retrieve the secondChanceItems collection
-        const collection = db.collection("secondChanceItems");
-
-        // Task 3: Find a specific secondChanceItem by ID
-        const id = req.params.id;
-        const secondChanceItem = await collection.findOne({ id });
-
-        if (!secondChanceItem) {
-            logger.error('SecondChanceItem not found');
-            return res.status(404).json({ error: "SecondChanceItem not found" });
-        }
-
-        // Task 4: Delete the object
-        await collection.deleteOne({ id });
-
-        res.json({ message: "Delete successful" });
-    } catch (e) {
-        logger.error('Error deleting item:', e);
-        next(e);
-    }
-});
-
 
 module.exports = router;
