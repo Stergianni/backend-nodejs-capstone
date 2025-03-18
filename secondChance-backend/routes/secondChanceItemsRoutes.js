@@ -25,7 +25,6 @@ const upload = multer({ storage })
 router.get('/', async (req, res, next) => {
   try {
     const db = await connectToDatabase()
-
     const collection = db.collection('secondChanceItems')
     const secondChanceItems = await collection.find({}).toArray()
     res.json(secondChanceItems)
@@ -75,7 +74,7 @@ router.post('/', upload.single('file'), async (req, res, next) => {
   }
 })
 
-// Update and existing item
+// Update an existing item
 router.put('/:id', async (req, res, next) => {
   try {
     const db = await connectToDatabase()
