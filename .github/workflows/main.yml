@@ -1,213 +1,27 @@
-1.
-Question 1
-Consider the following code to handle a user login.
-
-router.post('/login', async (req, res) => {
-
-     try {
-
-         const db = await connectToDatabase();
-
-         const collection = db.collection("users");
-
-         const theUser = await collection.findOne({ email: req.body.email });
-
-
-        if (theUser) {
-
-          const userName = theUser.firstName;
-
-          const userEmail = theUser.email;
-
-          let payload = {
-
-             user: {
-
-                 id: theUser._id.toString(),
-
-             },
-
-          };
-
-
-          const authtoken = jwt.sign(payload, JWT_SECRET);
-
-          logger.info('User logged in successfully');
-
-          return res.status(200).json({ authtoken, userName, userEmail });
-
-        } else {
-
-         logger.error('User not found');
-
-         return res.status(404).json({ error: 'User not found' });
-
-        }
-
-     } catch (e) {
-
-         logger.error(e);
-
-         return res.status(500).json({ error: 'Internal server error', details: e.message });
-
-        }
-
-});
-
-
-
-Which of the following statements BEST describes the server's behavior in response to a valid user login attempt?
-
-
-The server logs an error message indicating the user was not found in the database.
-
-
-
-The server returns a status code 200, the user’s authentication token, and account details.
-
-
-
-The server returns a status code 404 with an error message indicating the user was not found.
-
-
-
-The server encounters an internal server error and returns a status code 500.
-
-
-1 point
-2.
-Question 2
-
-A user attempts to log in. However, the server responds with an error message due to an invalid password. Which of the following modifications would be MOST appropriate?
-
-
-Send an error message indicating the server response 401 and the appropriate message.
-
-
-
-Modify the server’s response to provide a more user-friendly error message.
-
-
-
-Send an error message with the correct password to be used for login.
-
-
-
-Redirect the user to the registration page to create a new account using a valid email format.
-
-
-1 point
-3.
-Question 3
-Which framework does the API use to log users in the Develop Backend Integration for Login lab?
-
-
-login
-
-
-
-logger
-
-
-
-pino
-
-
-
-bcryptjs
-
-
-1 point
-4.
-Question 4
-
-While testing the RegisterPage component, you attempt to register with an already registered email. Which of the following is the MOST appropriate response from the server?
-
-
-Implement client-side validation to check if the email is registered before making the API call.
-
-
-
-The server should respond with an error message indicating that the email is already in use.
-
-
-
-Redirect the user to the login page to log in with the existing credentials.
-
-
-
-Modify the server’s response to provide a more user-friendly error message.
-
-
-1 point
-5.
-Question 5
-Which line of code could you use to import the authentication routes and import them to the main application in the Develop Back-end Integration for Login lab?
-
-
-const authRoutes = require('./routes/authRoutes');
-
-
-
-const authRoutes = require.authRoutes();
-
-
-
-const authRoutes = require(authRoutes);
-
-
-
-const authRoutes = app.require('./routes/authRoutes');
-
-
-1 point
-6.
-Question 6
-If a user wants to update their profile name, which of the following queries would be the MOST appropriate to find the user details in their profile by email?
-
-
-const user = await User.findOne({ id: req.params.userId });
-
-
-
-const user = await User.findOne({ email: req.body.email });
-
-
-
-const user = await User.findOneAndUpdate(
-
- { email: req.body.email },
-
- { $set: { email: req.body.newEmail } },
-
- { new: true }
-
-);
-
-
-
-const user = await User.findOne({ password: req.body.password });
-
-
-1 point
-7.
-Question 7
-What is the appropriate functionality in regard to the details page?
-
-
-It displays the user’s first and last name.
-
-
-
-It displays the details of all the items in the collection.
-
-
-
-Only a registered user can access it.
-
-
-
-It has a button for the user who posted the item to update its details.
-
-
-1 point
+name: 'CI/CD'
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+jobs:
+  lint_js:
+      name: Lint JavaScript Files
+      runs-on: ubuntu-latest
+      steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+      - name: Install and Run Linter
+        run: |
+          # This command finds all JavaScript files recursively and runs JSHint on them
+          npm init -y
+          npm install eslint eslint-config-standard eslint@^8.0.1 eslint-plugin-import@^2.25.2 eslint-plugin-n@^16.0.0  eslint-plugin-promise@^6.0.0
+          find ./secondChance-backend -name app.js -exec ./node_modules/.bin/eslint -c .eslintrc.js {} +
+          # find ./secondChance-backend -name auth.js -exec ./node_modules/.bin/eslint -c .eslintrc.js {} +
+          # find ./secondChance-backend -name secondChanceItemsRoutes.js -exec ./node_modules/.bin/eslint -c .eslintrc.js {} +
+          # find ./secondChance-backend -name searchRoutes.js -exec ./node_modules/.bin/eslint -c .eslintrc.js {} +
+          # find ./secondChance-backend -name index.js -exec ./node_modules/.bin/eslint -c .eslintrc.js {} +
+          # find ./sentiment -name index.js -exec ./node_modules/.bin/eslint -c .eslintrc.js {} +
+          echo "Linted all the js files successfully"
