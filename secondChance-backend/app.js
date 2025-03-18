@@ -1,54 +1,52 @@
-/* jshint esversion: 8 */
-require('dotenv').config()
-const MongoClient = require('mongodb').MongoClient
-const fs = require('fs')
+/*jshint esversion: 8 */
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const pinoLogger = require('./logger');
+const path = require('path');
 
-// MongoDB connection URL with authentication options
-const url = process.env.MONGO_URL
-const filename = `${__dirname}/secondChanceItems.json`
-const dbName = 'secondChance'
-const collectionName = 'secondChanceItems'
+const connectToDatabase = require('./models/db');
+const {loadData} = require("./util/import-mongo/index");
 
-// Load data asynchronously from the file
-async function loadData() {
-  try {
-    const data = JSON.parse(await fs.promises.readFile(filename, 'utf8')).docs
 
-    const client = new MongoClient(url, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true
-    })
+const app = express();
+app.use("*",cors());
+const port = 3060;
 
-    // Connect to MongoDB
-    await client.connect()
-    console.log('Connected successfully to server')
+// Connect to MongoDB; we just do this one time
+connectToDatabase().then(() => {
+    pinoLogger.info('Connected to DB');
+})
+    .catch((e) => console.error('Failed to connect to DB', e));
 
-    const db = client.db(dbName)
-    const collection = db.collection(collectionName)
 
-    // Create a unique index on 'id' to avoid duplicates
-    await collection.createIndex({ id: 1 }, { unique: true })
+app.use(express.json());
 
-    // Check if there are any existing documents in the collection
-    const documents = await collection.find({}).toArray()
-    if (documents.length === 0) {
-      // Insert data if the collection is empty
-      const insertResult = await collection.insertMany(data)
-      console.log('Inserted documents:', insertResult.insertedCount)
-    } else {
-      console.log('Items already exist in the DB')
-    }
-  } catch (err) {
-    console.error('Error during data loading:', err)
-  } finally {
-    // Close the MongoDB client connection
-    await client.close()
-  }
-}
+// Route files
+const secondChanceRoutes = require('./routes/secondChanceItemsRoutes');
+const authRoutes = require('./routes/authRoutes');
+const searchRoutes = require('./routes/searchRoutes');
+const pinoHttp = require('pino-http');
+const logger = require('./logger');
 
-// Execute the loadData function
-loadData()
+app.use(pinoHttp({ logger }));
+app.use(express.static(path.join(__dirname, 'public')));
 
-module.exports = {
-  loadData
-}
+// Use Routes
+app.use('/api/secondchance/items', secondChanceRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/secondchance/search', searchRoutes);
+
+// Global Error Handler
+app.use((err, req, res, next) => {
+    console.error(err);
+    res.status(500).send('Internal Server Error');
+});
+
+app.get("/",(req,res)=>{
+    res.send("Inside the server")
+})
+
+app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+});
