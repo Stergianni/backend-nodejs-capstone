@@ -84,4 +84,48 @@ router.get('/:id', async (req, res, next) => {
     }
 });
 
+router.put('/:id', async (req, res, next) => {
+    try {
+        // Task 1: Retrieve the database connection
+        const db = await connectToDatabase();
+
+        // Task 2: Retrieve the secondChanceItems collection
+        const collection = db.collection("secondChanceItems");
+
+        // Task 3: Check if the secondChanceItem exists
+        const id = req.params.id;
+        const secondChanceItem = await collection.findOne({ id });
+
+        if (!secondChanceItem) {
+            logger.error('SecondChanceItem not found');
+            return res.status(404).json({ error: "SecondChanceItem not found" });
+        }
+
+        // Task 4: Update the item's attributes
+        secondChanceItem.category = req.body.category;
+        secondChanceItem.condition = req.body.condition;
+        secondChanceItem.age_days = req.body.age_days;
+        secondChanceItem.description = req.body.description;
+        secondChanceItem.age_years = Number((secondChanceItem.age_days / 365).toFixed(1));
+        secondChanceItem.updatedAt = new Date();
+
+        const updatedItem = await collection.findOneAndUpdate(
+            { id },
+            { $set: secondChanceItem },
+            { returnDocument: 'after' }
+        );
+
+        // Task 5: Send confirmation
+        if (updatedItem) {
+            res.json({ message: "Update successful", updatedItem });
+        } else {
+            res.status(500).json({ error: "Update failed" });
+        }
+    } catch (e) {
+        logger.error('Error updating item:', e);
+        next(e);
+    }
+});
+
+
 module.exports = router;
